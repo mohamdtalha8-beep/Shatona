@@ -8,7 +8,7 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
         body { 
-            /* هنا وضعنا اسم الملف الطويل، إذا لم يعمل انسخ الاسم من GitHub وضعه هنا */
+            /* تم استخدام اسم الملف الطويل للخلفية كما طلبت */
             background-image: url('E5091315-1871-4312-9BE6-77277ABC6FCD.png'); 
             background-size: cover;
             background-position: center;
@@ -134,10 +134,15 @@
         const messagesContainer = document.getElementById('messages-container');
         const messageInput = document.getElementById('messageInput');
 
+        // دالة الدخول مع ميزة الحفظ
         window.startChat = function() {
             const name = document.getElementById('nameInput').value.trim();
             if (name === "") { alert("الرجاء إدخال اسمك"); return; }
             userName = name;
+            
+            // حفظ الاسم في ذاكرة المتصفح
+            localStorage.setItem('shatonaUserName', userName);
+            
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('chat-screen').style.display = 'flex';
             listenForMessages();
@@ -189,6 +194,16 @@
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
             });
         }
+
+        // التحقق من الاسم المحفوظ عند فتح الصفحة
+        window.addEventListener('load', () => {
+            const savedName = localStorage.getItem('shatonaUserName');
+            if (savedName) {
+                document.getElementById('nameInput').value = savedName;
+                // يمكنك إزالة علامتي // من السطر التالي إذا أردت الدخول التلقائي
+                // startChat(); 
+            }
+        });
     </script>
 </body>
 </html>
