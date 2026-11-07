@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shatona Chat ❤️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+        body { 
+            background: linear-gradient(135deg, #1a1a2e, #16213e); 
+            color: white; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+        }
+        
+        /* شاشة الدخول */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0f0f1a; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 100; padding: 20px;
+        }
+        #login-screen h1 { color: #ff4d6d; margin-bottom: 20px; font-size: 2rem; }
+        #login-screen input {
+            width: 80%; max-width: 300px; padding: 15px; border-radius: 10px;
+            border: 2px solid #ff4d6d; background: #1a1a2e; color: white;
+            font-size: 16px; text-align: center; margin-bottom: 15px; outline: none;
+        }
+        #login-screen button {
+            padding: 12px 30px; border: none; border-radius: 10px;
+            background: #ff4d6d; color: white; font-size: 16px; font-weight: bold;
+            cursor: pointer; transition: 0.3s;
+        }
+        #login-screen button:hover { background: #ff758f; }
+
+        /* واجهة الدردشة */
+        #chat-screen { display: none; flex-direction: column; height: 100%; }
+        .header {
+            background: rgba(255, 77, 109, 0.2); padding: 15px; text-align: center;
+            border-bottom: 1px solid rgba(255, 77, 109, 0.3); backdrop-filter: blur(10px);
+        }
+        .header h2 { color: #ff4d6d; font-size: 1.2rem; }
+        
+        #messages-container {
+            flex: 1; overflow-y: auto; padding: 15px; display: flex;
+            flex-direction: column; gap: 10px; scroll-behavior: smooth;
+        }
+        
+        .message {
+            max-width: 75%; padding: 10px 15px; border-radius: 15px;
+            font-size: 15px; line-height: 1.4; word-wrap: break-word;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .msg-me {
+            background: #ff4d6d; color: white; align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+        .msg-other {
+            background: #2a2a4a; color: #e0e0e0; align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+        
+        .input-area {
+            display: flex; padding: 10px; background: rgba(26, 26, 46, 0.9);
+            border-top: 1px solid rgba(255, 255, 255, 0.1); gap: 10px;
+        }
+        .input-area input {
+            flex: 1; padding: 12px; border-radius: 20px;
+            border: 1px solid #444; background: #0f0f1a; color: white;
+            font-size: 16px; outline: none;
+        }
+        .input-area button {
+            padding: 12px 20px; border-radius: 20px; border: none;
+            background: #ff4d6d; color: white; font-size: 16px; font-weight: bold;
+            cursor: pointer; transition: 0.3s;
+        }
+        .input-area button:hover { background: #ff758f; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <!-- شاشة إدخال الاسم -->
+    <div id="login-screen">
+        <h1>Shatona Chat ❤️</h1>
+        <p style="margin-bottom: 20px; color: #aaa;">أدخل اسمك للدخول إلى الدردشة</p>
+        <input type="text" id="nameInput" placeholder="اسمك (مثلاً: محمد أو حبيبتي)" maxlength="20">
+        <button onclick="startChat()">دخول</button>
+    </div>
+
+    <!-- واجهة الدردشة -->
+    <div id="chat-screen">
+        <div class="header">
+            <h2>❤️ دردشة خاصة ❤️</h2>
+        </div>
+        <div id="messages-container"></div>
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="اكتب رسالتك..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">إرسال</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+
+        // إعدادات Firebase الخاصة بك
+        const firebaseConfig = {
+            apiKey: "AIzaSyC5k-iA7dvbA-esfKS47wlJErmGYGGF0eU",
+            authDomain: "shatona-9f283.firebaseapp.com",
+            projectId: "shatona-9f283",
+            storageBucket: "shatona-9f283.firebasestorage.app",
+            messagingSenderId: "310820784958",
+            appId: "1:310820784958:web:adbbc2be649f7a864a3a6f",
+            measurementId: "G-DEPK5JKGVS"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let userName = "";
+        const messagesContainer = document.getElementById('messages-container');
+        const messageInput = document.getElementById('messageInput');
+
+        window.startChat = function() {
+            const name = document.getElementById('nameInput').value.trim();
+            if (name === "") { alert("الرجاء إدخال اسمك"); return; }
+            userName = name;
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('chat-screen').style.display = 'flex';
+            listenForMessages();
+        }
+
+        window.sendMessage = async function() {
+            const text = messageInput.value.trim();
+            if (text === "") return;
+            messageInput.value = ""; 
+
+            try {
+                await addDoc(collection(db, "messages"), {
+                    text: text,
+                    sender: userName,
+                    timestamp: serverTimestamp()
+                });
+            } catch (e) {
+                console.error("خطأ في الإرسال: ", e);
+                alert("حدث خطأ، تأكد من اتصالك بالإنترنت");
+            }
+        }
+
+        window.handleKeyPress = function(e) {
+            if (e.key === "Enter") {
+                sendMessage();
+            }
+        }
+
+        function listenForMessages() {
+            const q = query(collection(db, "messages"), orderBy("timestamp", "asc"));
+            
+            onSnapshot(q, (snapshot) => {
+                messagesContainer.innerHTML = "";
+                
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const msgDiv = document.createElement('div');
+                    
+                    if (data.sender === userName) {
+                        msgDiv.className = 'message msg-me';
+                    } else {
+                        msgDiv.className = 'message msg-other';
+                    }
+                    
+                    msgDiv.innerHTML = `<div style="font-size: 10px; opacity: 0.7; margin-bottom: 2px;">${data.sender}</div>${data.text}`;
+                    messagesContainer.appendChild(msgDiv);
+                });
+                
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
+        }
+    </script>
+</body>
+</html>
