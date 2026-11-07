@@ -8,7 +8,7 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
         body { 
-            /* تم استخدام اسم الملف الطويل للخلفية كما طلبت */
+            /* الخلفية التي تم رفعها */
             background-image: url('E5091315-1871-4312-9BE6-77277ABC6FCD.png'); 
             background-size: cover;
             background-position: center;
@@ -134,7 +134,7 @@
         const messagesContainer = document.getElementById('messages-container');
         const messageInput = document.getElementById('messageInput');
 
-        // دالة الدخول مع ميزة الحفظ
+        // دالة الدخول
         window.startChat = function() {
             const name = document.getElementById('nameInput').value.trim();
             if (name === "") { alert("الرجاء إدخال اسمك"); return; }
@@ -148,6 +148,7 @@
             listenForMessages();
         }
 
+        // إرسال رسالة
         window.sendMessage = async function() {
             const text = messageInput.value.trim();
             if (text === "") return;
@@ -165,12 +166,14 @@
             }
         }
 
+        // زر الإدخال (Enter)
         window.handleKeyPress = function(e) {
             if (e.key === "Enter") {
                 sendMessage();
             }
         }
 
+        // استقبال الرسائل
         function listenForMessages() {
             const q = query(collection(db, "messages"), orderBy("timestamp", "asc"));
             
@@ -199,9 +202,9 @@
         window.addEventListener('load', () => {
             const savedName = localStorage.getItem('shatonaUserName');
             if (savedName) {
+                // إذا كان الاسم محفوظاً، ضعه في المربع وادخل مباشرة
                 document.getElementById('nameInput').value = savedName;
-                // يمكنك إزالة علامتي // من السطر التالي إذا أردت الدخول التلقائي
-                // startChat(); 
+                startChat(); 
             }
         });
     </script>
